@@ -54,6 +54,9 @@ import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
+from nysa-server import main
+
+
 DESCRIPTION = "\n" \
               "\n" \
               "usage: nysa-server [options]\n"
@@ -65,9 +68,31 @@ EPILOG =    "\n" \
             "\t\tSomething Else\n" \
             "\n"
 
-def main(argv):
-    print "HI"
+DEFAULT_PORT = 12591
 
-if __name__ == __main__:
+def main(argv):
+    #Parse out the commandline arguments
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=DESCRIPTION,
+        epilog=EPILOG
+    )
+
+    parser.add_argument("-d", "--debug",
+                        action="store_true",
+                        help="Enable Debug Messages")
+    parser.add_argument("-p", "--port",
+                        type = str,
+                        nargs="?",
+                        default="%d" % DEFAULT_PORT,
+                        help="Specify an alternative port')
+
+    args = parser.parse_args()
+
+    n = NysaGui(args.debug)
+
+
+
+if __name__ == "__main__":
     main(sys.argv)
 
