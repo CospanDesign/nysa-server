@@ -1,0 +1,73 @@
+#! /usr/bin/python
+# Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
+
+# This file is part of Nysa (wiki.cospandesign.com/index.php?title=Nysa).
+#
+# Nysa is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# any later version.
+#
+# Nysa is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Nysa; If not, see <http://www.gnu.org/licenses/>.
+
+
+# -*- coding: utf-8 -*-
+
+"""
+nysa-video-server
+
+Application to be run as a daemon
+
+The application listens on a socket at 12591
+
+The first socket opened is the control socket where
+user then sends commands down to open addional domain
+specific sockets, for example to open up a socket to
+receive video images the JSON string
+
+"
+{
+    "video":{
+        "port":"12599",
+        "width":480,
+        "height":272,
+        "fourcc":"RGBA"
+    }
+}
+
+The server will then open up a port where it will expect to receive images at the above frame
+
+Users sends and received data to/from a nysa device
+
+Format of a data frame
+"""
+
+import sys
+import os
+import argparse
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+
+DESCRIPTION = "\n" \
+              "\n" \
+              "usage: nysa-server [options]\n"
+
+EPILOG =    "\n" \
+            "\n" \
+            "Examples:\n" \
+            "\tSomthing\n" \
+            "\t\tSomething Else\n" \
+            "\n"
+
+def main(argv):
+    print "HI"
+
+if __name__ == __main__:
+    main(sys.argv)
+
