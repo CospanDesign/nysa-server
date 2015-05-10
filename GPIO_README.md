@@ -1,23 +1,20 @@
-GPIO Server
+Video Controller Server
 
-The GPIO Server allows you to control GPIOs through a socket
+The Video Controller allows you to control the playback of videos on the server
 
 The following commands are available:
     
-    set_direction: Set the direction of the GPIOs
-    set_value: Set the pin values on the GPIOs
-    get_value: Get the pin values from the GPIOs
-    setup_interrupt: Sets up the interrupt to fire off when a button is pressed
-        (not implemented yet)
-
+    play: play a video file
+    stop: stop playing a video file
+    display_picture: displays a picture
+    status: gets the status
 
     Commands are issued in the following way:
 
-    Set pin 1 to an output (1):
+    Play a video
     "{
-        "command":"set_direction",
-        "pin":1,
-        "direction":1
+        "command":"play",
+        "file":"/home/edison/bbb.avi"
     }"
     Response:
         "{
@@ -26,12 +23,9 @@ The following commands are available:
 
 
 
-    Set pin 0 to an output, pin 1 to an output, pin 2 to an input, pin 3 to an
-        input:
+    Stop Playing a Video
     "{
-        "command":"set_direction",
-        "pin":[0, 1, 2, 3],
-        "direction":[1, 1, 0, 0]
+        "command":"stop"
     }"
     Response:
         "{
@@ -40,53 +34,26 @@ The following commands are available:
 
 
 
-    Set pin 1 to low(0):
+    Display a picture, after the first packet is sent the user should send l
     "{
-        "command":"set_value",
-        "pin":1,
-        "value":0
+        "command":"display_picture",
+        "size":100
     }"
-     Response:
-        "{
-            "response":"ok",
-        }"
+    [list of bytes]
 
-   
-
-    Set pin 0 to high (1) and pin 1 to high (0):
-    "{
-        "command":"set_value"
-        "pin":[0, 1],
-        "value":[1, 0]
-    }"
     Response:
         "{
             "response":"ok",
         }"
 
-    Get value of pin 2
+    Get Status
     "{
-        "command":"get_value",
-        "pin":2
+        "command":"status"
     }"
     Response:
         "{
             "response":"ok",
-            "value":0
+            "status":"status value"
         }"
-
-    Get value of pin 2 and 3
-     "{
-        "command":"get_value",
-        "pin":[2, 3]
-    }"
-    Response:
-        "{
-            "response":"ok",
-            "value":[0, 1]
-        }"
-
-  
-
 
 

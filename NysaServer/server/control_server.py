@@ -5,7 +5,7 @@ import json
 from server_base import ServerBase
 
 MAX_RECV_SIZE = 4096
-DEFAULT_CONTROL_PORT = 12591
+DEFAULT_CONTROL_PORT = 12593
 
 
 class ControlServer(SocketServer.TCPServer):
@@ -15,6 +15,7 @@ class ControlServer(SocketServer.TCPServer):
         self.sub_servers = []
 
         from nysa_gpio_server import NysaGPIOServer
+        from video_control_server import NysaVideoControlServer
         script_list = ServerBase.plugins
 
         self.server_types = {}
@@ -41,16 +42,31 @@ class ControlServer(SocketServer.TCPServer):
 
         server_type = self.server_types[d["type"]]
         host = "localhost"
-        s = server_type((host, port), server_type.get_request_handler())
+        rh = server_type.get_request_handler()
+        print "reqeust handler: %s" % str(rh)
+        s = server_type((host, port), rh)
+        for ars in self.sub_servers:
+            if ars.get_name() == s.name():
+                print "Server already running"
+                ars.setup(self.n)
+                ip, port = ars.server_address
+                rd["uri"] = "%s:%s" % (str(ip), str(port))
+                rd["ip"] = ip
+                rd["port"] = port
+                return rd
+
         s.setup(self.n)
         ip, port = s.server_address
+        print "Starting a server at: %s:%s" % (str(ip), str(port))
 
         #Put the server in the background
         server_thread = threading.Thread(target = s.serve_forever)
         server_thread.setDaemon(True)
+        server_thread.start()
         rd["uri"] = "%s:%s" % (str(ip), str(port))
         rd["ip"] = ip
         rd["port"] = port
+        self.sub_servers.append(s)
         return rd
 
     def list_servers(self, d):
@@ -104,6 +120,11 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
         #response = "{}: {}".format(cur_thread.name, data)
         rd = self.commands[request_dict["command"]](request_dict)
+        for key in request_dict:
+            if key not in rd:
+                rd[key] = request_dict[key]
+
+
         #rd["port"] = request_dict["port"]
         self.request.sendall(json.dumps(rd))
 

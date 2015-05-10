@@ -22,7 +22,7 @@ class gpio_request_handler(SocketServer.BaseRequestHandler):
         self.commands["setup_interrupt"] = self.setup_interrupt
 
     def handle(self):
-        print "In listening thread handler..."
+        print "GPIO In listening thread handler..."
         data = self.request.recv(MAX_RECV_SIZE)
         cur_thread = threading.current_thread()
         request_dict = {}
@@ -46,78 +46,82 @@ class gpio_request_handler(SocketServer.BaseRequestHandler):
             return
 
         rd = self.commands[request_dict["command"]](request_dict)
+        for key in request_dict:
+            if key not in rd:
+                rd[key] = request_dict[key]
+        print "Sending: %s" % json.dumps(rd)
         self.request.sendall(json.dumps(rd))
 
     def set_direction(self, d):
         rd = {}
         rd["response"] = "ok"
         print "setting direction"
-        if "pin" not in rd:
+        if "pin" not in d:
             rd["response"] = "error"
             rd["error"] = "pin entry not in request"
             return rd
 
-        if "direction" not in rd:
+        if "direction" not in d:
             rd["response"] = "error"
             rd["error"] = "direction entry not in request"
             return rd
 
 
-        if isinstance(rd["pin"], list):
+        if isinstance(d["pin"], list):
             if not isinstance(rd["direction"], list):
                 rd["response"] = "error"
                 rd["error"] = "pin is a list and direction is not a list"
                 return rd
 
-            if len(rd["direction"]) != len(rd["pin"]):
+            if len(d["direction"]) != len(d["pin"]):
                 rd["response"] = "error"
                 rd["error"] = "pin is a list and direction is not a list"
                 return rd
                
-            for i in range(len(rd["pin"])):
-                self.gpio.set_pin_direction(rd["pin"][i], rd["direction"][i])
+            for i in range(len(d["pin"])):
+                self.server.gpio.set_pin_direction(d["pin"][i], d["direction"][i])
 
         else:
-            pin = rd["pin"]
-            direction = rd["direction"]
-            self.gpio.set_pin_direction(rd["pin"], rd["direction"])
+            pin = d["pin"]
+            direction = d["direction"]
+            self.server.gpio.set_pin_direction(d["pin"], d["direction"])
         
-        return rd
+        return d
 
     def set_value(self, d):
         rd = {}
         print "set value"
         rd["response"] = "ok"
         print "setting value"
-        if "pin" not in rd:
+        if "pin" not in d:
             rd["response"] = "error"
             rd["error"] = "pin entry not in request"
             return rd
 
-        if "value" not in rd:
+        if "value" not in d:
             rd["response"] = "error"
             rd["error"] = "value entry not in request"
             return rd
 
 
-        if isinstance(rd["pin"], list):
-            if not isinstance(rd["value"], list):
+        if isinstance(d["pin"], list):
+            if not isinstance(d["value"], list):
                 rd["response"] = "error"
                 rd["error"] = "pin is a list and value is not a list"
                 return rd
 
-            if len(rd["value"]) != len(rd["pin"]):
+            if len(d["value"]) != len(d["pin"]):
                 rd["response"] = "error"
                 rd["error"] = "pin is a list and value is not a list"
                 return rd
                
-            for i in range(len(rd["pin"])):
-                self.gpio.set_bit_value(rd["pin"][i], rd["value"][i])
+            for i in range(len(d["pin"])):
+                self.server.gpio.set_bit_value(d["pin"][i], d["value"][i])
 
         else:
-            pin = rd["pin"]
-            value = rd["value"]
-            self.gpio.set_bit_value(rd["pin"], rd["value"])
+            pin = d["pin"]
+            value = d["value"]
+            self.server.gpio.set_bit_value(d["pin"], d["value"])
         
         return rd
 
@@ -127,18 +131,18 @@ class gpio_request_handler(SocketServer.BaseRequestHandler):
         print "get value"
         values = []
         if "pin" not in rd:
-            rd["pin"] = [2, 3]
+            d["pin"] = [2, 3]
             #XXX: Fix to simplify interface for hackathon
             #rd["response"] = "error"
             #rd["error"] = "pin entry not in request"
             #return rd
 
-        if isinstance(rd["pin"], list):
-            for p in rd["pin"]:
-                values.append(self.gpio.get_bit_value(p))
+        if isinstance(d["pin"], list):
+            for p in d["pin"]:
+                values.append(self.server.gpio.get_bit_value(p))
 
         else:
-            values = self.gpio.get_bit_value(p)
+            values = self.server.gpio.get_bit_value(p)
 
         rd["value"] = values
         return rd
@@ -148,35 +152,35 @@ class gpio_request_handler(SocketServer.BaseRequestHandler):
         rd = {}
         rd["response"] = "ok"
         print "setting interrupt"
-        if "pin" not in rd:
+        if "pin" not in d:
             rd["response"] = "error"
             rd["error"] = "pin entry not in request"
             return rd
 
-        if "interrupt" not in rd:
+        if "interrupt" not in d:
             rd["response"] = "error"
             rd["error"] = "interrupt entry not in request"
             return rd
 
 
-        if isinstance(rd["pin"], list):
-            if not isinstance(rd["interrupt"], list):
+        if isinstance(d["pin"], list):
+            if not isinstance(d["interrupt"], list):
                 rd["response"] = "error"
                 rd["error"] = "pin is a list and interrupt is not a list"
                 return rd
 
-            if len(rd["interrupt"]) != len(rd["pin"]):
+            if len(d["interrupt"]) != len(d["pin"]):
                 rd["response"] = "error"
                 rd["error"] = "pin is a list and interrupt is not a list"
                 return rd
                
-            for i in range(len(rd["pin"])):
-                self.gpio.set_interrupt_both_edge(rd["pin"][i], rd["interrupt"][i])
+            for i in range(len(d["pin"])):
+                self.server.gpio.set_interrupt_both_edge(d["pin"][i], d["interrupt"][i])
 
         else:
-            pin = rd["pin"]
-            interrupt = rd["interrupt"]
-            self.gpio.set_bit_interrupt_both_edge(rd["pin"], rd["interrupt"])
+            pin = d["pin"]
+            interrupt = d["interrupt"]
+            self.server.gpio.set_bit_interrupt_both_edge(d["pin"], d["interrupt"])
         
         return rd
 
@@ -196,6 +200,9 @@ class NysaGPIOServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer, Server
     @staticmethod
     def get_request_handler():
         return gpio_request_handler
+
+    def get_name(self):
+        return "gpio"
     
     def setup(self, nysa):
         self.n = nysa
@@ -209,17 +216,3 @@ class NysaGPIOServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer, Server
         self.gpio.set_port_raw(0x00000000)
         print "setup gpios"
 
-
-def start_gpio_server(host = "localhost", port = None, nysa = None):
-    server = NysaGPIOServer((host, port), gpio_request_handler)
-    ip, port = server.server_address
-
-    #Put the server in the background
-    server_thread = threading.Thread(target = server.serve_forever)
-
-    #Change to a daemon so the thread exit when the main thread exits
-    server_thread.daemon = True
-    server_thread.start()
-
-    print "Server thread branched off, running server in the background"
-    return server
