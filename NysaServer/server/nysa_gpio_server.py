@@ -51,16 +51,77 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     def set_direction(self, d):
         rd = {}
         rd["response"] = "ok"
-        print "TODO"
         print "setting direction"
+        if "pin" not in rd:
+            rd["response"] = "error"
+            rd["error"] = "pin entry not in request"
+            return rd
+
+        if "direction" not in rd:
+            rd["response"] = "error"
+            rd["error"] = "direction entry not in request"
+            return rd
+
+
+        if isinstance(rd["pin"], list):
+            if not isinstance(rd["direction"], list):
+                rd["response"] = "error"
+                rd["error"] = "pin is a list and direction is not a list"
+                return rd
+
+            if len(rd["direction"]) != len(rd["pin"]):
+                rd["response"] = "error"
+                rd["error"] = "pin is a list and direction is not a list"
+                return rd
+               
+            for i in range(len(rd["pin"])):
+                self.gpio.set_pin_direction(rd["pin"[i], rd["direction"][i])
+
+        else:
+            pin = rd["pin"]
+            direction = rd["direction"]
+            self.gpio.set_pin_direction(rd["pin"], rd["direction")
+        
         return rd
 
     def set_value(self, d):
         rd = {}
-        rd["response"] = "ok"
-        print "TODO"
         print "set value"
+        rd["response"] = "ok"
+        print "setting value"
+        if "pin" not in rd:
+            rd["response"] = "error"
+            rd["error"] = "pin entry not in request"
+            return rd
+
+        if "value" not in rd:
+            rd["response"] = "error"
+            rd["error"] = "value entry not in request"
+            return rd
+
+
+        if isinstance(rd["pin"], list):
+            if not isinstance(rd["value"], list):
+                rd["response"] = "error"
+                rd["error"] = "pin is a list and value is not a list"
+                return rd
+
+            if len(rd["value"]) != len(rd["pin"]):
+                rd["response"] = "error"
+                rd["error"] = "pin is a list and value is not a list"
+                return rd
+               
+            for i in range(len(rd["pin"])):
+                self.gpio.set_bit_value(rd["pin"[i], rd["value"][i])
+
+        else:
+            pin = rd["pin"]
+            value = rd["value"]
+            self.gpio.set_bit_value(rd["pin"], rd["value")
+        
         return rd
+
+
 
     def get_value(self, d):
         rd = {}
@@ -70,10 +131,41 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         return rd
 
     def setup_interrupt(self, d):
-        rd = {}
-        rd["response"] = "ok"
-        print "TODO"
         print "setup interrupt"
+        rd = {}
+        print "set interrupt"
+        rd["response"] = "ok"
+        print "setting interrupt"
+        if "pin" not in rd:
+            rd["response"] = "error"
+            rd["error"] = "pin entry not in request"
+            return rd
+
+        if "interrupt" not in rd:
+            rd["response"] = "error"
+            rd["error"] = "interrupt entry not in request"
+            return rd
+
+
+        if isinstance(rd["pin"], list):
+            if not isinstance(rd["interrupt"], list):
+                rd["response"] = "error"
+                rd["error"] = "pin is a list and interrupt is not a list"
+                return rd
+
+            if len(rd["interrupt"]) != len(rd["pin"]):
+                rd["response"] = "error"
+                rd["error"] = "pin is a list and interrupt is not a list"
+                return rd
+               
+            for i in range(len(rd["pin"])):
+                self.gpio.set_interrupt_both_edge(rd["pin"[i], rd["interrupt"][i])
+
+        else:
+            pin = rd["pin"]
+            interrupt = rd["interrupt"]
+            self.gpio.set_bit_interrupt_both_edge(rd["pin"], rd["interrupt")
+        
         return rd
 
     def interrupt_callback(self, callback):
