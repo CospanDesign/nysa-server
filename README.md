@@ -22,9 +22,9 @@ is executed successfully it will return a JSON string:
 Available Functions:
 
     Commands:
-        Shutdown the server:
+        Ping the server:
             "{
-                "command":"shutdown"
+                "command":"ping"
             }"
         Start a peripheral server
             Starting a new sever is accomplished by sending a start-server

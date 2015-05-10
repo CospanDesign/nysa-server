@@ -38,7 +38,7 @@ class Test (unittest.TestCase):
     '''
     def test_start_server(self):
         print "Test start server"
-        server = control_server.start_control_server()
+        server = control_server.start_control_server_async()
         ip, port = server.server_address
         command_client(ip, port, "ping")
 
@@ -46,7 +46,7 @@ class Test (unittest.TestCase):
     '''
 
     def test_start_sub_server(self):
-        server = control_server.start_control_server()
+        server = control_server.start_control_server_async()
         ip, port = server.server_address
         command_client(ip, port, "ping")
 

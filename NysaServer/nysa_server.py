@@ -51,10 +51,22 @@ import sys
 import os
 
 from server import tcp_server
-import nysa
+from nysa.common import status
+from nysa.host import platform_scanner
+
+
+
+from server import control_server
 
 def main(port, debug = False):
     print "Start a server on port: %d" % port
     print "Debug :%s" % str(debug)
+    s = status.Status()
+    if debug:
+        s.set_level("verbose")
 
+    s.Info("Find Nysa Device")
+
+    nysa = platform_scanner.get_platforms(s)[0]
+    control_server.start_control_server_sync(host = "localhost", port = port, nysa = nysa)
 
