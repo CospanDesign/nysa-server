@@ -50,9 +50,11 @@ Format of a data frame
 import sys
 import os
 
+from server import tcp_server
 import nysa
 
-def main():
-    print "In Main"
+def main(port, debug = False):
+    print "Start a server on port: %d" % port
+    print "Debug :%s" % str(debug)
 
 

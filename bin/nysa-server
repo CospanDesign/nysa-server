@@ -31,15 +31,14 @@ user then sends commands down to open addional domain
 specific sockets, for example to open up a socket to
 receive video images the JSON string
 
-"
-{
+"{
     "video":{
         "port":"12599",
         "width":480,
         "height":272,
         "fourcc":"RGBA"
     }
-}
+}"
 
 The server will then open up a port where it will expect to receive images at the above frame
 
@@ -54,7 +53,7 @@ import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
-from nysa-server import main
+from NysaServer import nysa_server
 
 
 DESCRIPTION = "\n" \
@@ -85,12 +84,12 @@ def main(argv):
                         type = str,
                         nargs="?",
                         default="%d" % DEFAULT_PORT,
-                        help="Specify an alternative port')
+                        help="Specify an alternative port")
+
 
     args = parser.parse_args()
-
-    n = NysaGui(args.debug)
-
+    port = int(args.port)
+    nysa_server.main(port = port, debug = args.debug)
 
 
 if __name__ == "__main__":
