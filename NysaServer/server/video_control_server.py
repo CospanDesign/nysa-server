@@ -72,8 +72,6 @@ class video_control_request_handler(SocketServer.BaseRequestHandler):
         data = self.request.recv(MAX_RECV_SIZE)
         return rd
 
-
-
 class NysaVideoControlServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer, ServerBase):
 
     started = False
@@ -131,7 +129,7 @@ class NysaVideoControlServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer
    
     def setup(self, nysa):
         if NysaVideoControlServer.started:
-            return
+            self.stop({})
 
         NysaVideoControlServer.started = True
         self.n = nysa
