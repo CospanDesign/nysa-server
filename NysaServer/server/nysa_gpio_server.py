@@ -2,6 +2,7 @@ import socket
 import threading
 import SocketServer
 import json
+import time
 
 from nysa.host.driver.gpio import GPIO
 
@@ -9,10 +10,11 @@ from server_base import ServerBase
 
 MAX_RECV_SIZE = 4096
 
-class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
+class gpio_request_handler(SocketServer.BaseRequestHandler):
     commands = {}
 
     def setup(self):
+        print "GPIO TCP Request setup!"
         self.commands = {}
         self.commands["set_direction"] = self.set_direction
         self.commands["set_value"] = self.set_value
@@ -43,9 +45,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             self.request.sendall(json.dumps(rd))
             return
 
-        #response = "{}: {}".format(cur_thread.name, data)
         rd = self.commands[request_dict["command"]](request_dict)
-        #rd["port"] = request_dict["port"]
         self.request.sendall(json.dumps(rd))
 
     def set_direction(self, d):
@@ -75,12 +75,12 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 return rd
                
             for i in range(len(rd["pin"])):
-                self.gpio.set_pin_direction(rd["pin"[i], rd["direction"][i])
+                self.gpio.set_pin_direction(rd["pin"][i], rd["direction"][i])
 
         else:
             pin = rd["pin"]
             direction = rd["direction"]
-            self.gpio.set_pin_direction(rd["pin"], rd["direction")
+            self.gpio.set_pin_direction(rd["pin"], rd["direction"])
         
         return rd
 
@@ -112,28 +112,40 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 return rd
                
             for i in range(len(rd["pin"])):
-                self.gpio.set_bit_value(rd["pin"[i], rd["value"][i])
+                self.gpio.set_bit_value(rd["pin"][i], rd["value"][i])
 
         else:
             pin = rd["pin"]
             value = rd["value"]
-            self.gpio.set_bit_value(rd["pin"], rd["value")
+            self.gpio.set_bit_value(rd["pin"], rd["value"])
         
         return rd
-
-
 
     def get_value(self, d):
         rd = {}
         rd["response"] = "ok"
-        print "TODO"
         print "get value"
+        values = []
+        if "pin" not in rd:
+            rd["pin"] = [2, 3]
+            #XXX: Fix to simplify interface for hackathon
+            #rd["response"] = "error"
+            #rd["error"] = "pin entry not in request"
+            #return rd
+
+        if isinstance(rd["pin"], list):
+            for p in rd["pin"]:
+                values.append(self.gpio.get_bit_value(p))
+
+        else:
+            values = self.gpio.get_bit_value(p)
+
+        rd["value"] = values
         return rd
 
     def setup_interrupt(self, d):
         print "setup interrupt"
         rd = {}
-        print "set interrupt"
         rd["response"] = "ok"
         print "setting interrupt"
         if "pin" not in rd:
@@ -159,12 +171,12 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 return rd
                
             for i in range(len(rd["pin"])):
-                self.gpio.set_interrupt_both_edge(rd["pin"[i], rd["interrupt"][i])
+                self.gpio.set_interrupt_both_edge(rd["pin"][i], rd["interrupt"][i])
 
         else:
             pin = rd["pin"]
             interrupt = rd["interrupt"]
-            self.gpio.set_bit_interrupt_both_edge(rd["pin"], rd["interrupt")
+            self.gpio.set_bit_interrupt_both_edge(rd["pin"], rd["interrupt"])
         
         return rd
 
@@ -180,15 +192,26 @@ class NysaGPIOServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer, Server
     @staticmethod
     def name():
         return "gpio"
+
+    @staticmethod
+    def get_request_handler():
+        return gpio_request_handler
     
     def setup(self, nysa):
-        super (NysaGPIOServer, nysa)
-        self.urn = nysa.find_device(GPIO)[0]
+        self.n = nysa
+        self.n.read_sdb()
+        self.urn = self.n.find_device(GPIO)[0]
         print "Found a GPIO device: %s" % self.urn
         self.gpio = GPIO(self.n, self.urn)
+        self.gpio.set_port_direction(0x00000003)
+        self.gpio.set_port_raw(0x00000003)
+        time.sleep(0.100)
+        self.gpio.set_port_raw(0x00000000)
+        print "setup gpios"
+
 
 def start_gpio_server(host = "localhost", port = None, nysa = None):
-    server = NysaGPIOServer((host, port), ThreadedTCPRequestHandler)
+    server = NysaGPIOServer((host, port), gpio_request_handler)
     ip, port = server.server_address
 
     #Put the server in the background

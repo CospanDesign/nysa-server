@@ -26,14 +26,33 @@ Available Functions:
             "{
                 "command":"ping"
             }"
+
+            Response:
+                "{
+                    "response":"ok",
+                    "value":"pong"
+                }"
+
+        List the available servers:
+            "{
+                "command":"list-servers"
+            }"
+
+            Response:
+                "{
+                    "response":"ok",
+                    "value":["gpio", "video"]
+                }"
+
         Start a peripheral server
             Starting a new sever is accomplished by sending a start-server
             command the protocol along with any of the configuration data,
             for example the video server is setup with in the following format.
 
+            Video Example
+
             "{
                 "command":"start-server",
-                "port":12599,
                 "type":"video"
                 "args":{
                     "width":480,
@@ -42,11 +61,27 @@ Available Functions:
                 }
             }"
 
+            GPIO Example
+
+            "{
+                "command":"start-server",
+                "type":"gpio"
+            }"
+
 
         The response will look like the following
         "{
             "response":"ok",
-            "port":12599
+            "port":12599,
+            "host":"127.0.0.1",
+            "uri":"127.0.0.1:12599"
         }"
-        Note if the port is not specified the server will find an available port
-        and send this to in the response
+
+        If an error occurs then the response will contain "error" with the error
+        value specified in the error field such as the following
+
+        "{
+            "response":"error",
+            "error":"Error information here"
+        }"
+

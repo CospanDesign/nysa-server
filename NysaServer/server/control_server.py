@@ -22,7 +22,7 @@ class ControlServer(SocketServer.TCPServer):
             self.server_types[s.name()] = s
 
     def start_sub_server(self, d):
-        print "d: %s" % str(d)
+        print "dictionary: %s" % str(d)
         rd = {}
         rd["response"] = "ok"
         if d["type"] not in self.server_types:
@@ -30,7 +30,7 @@ class ControlServer(SocketServer.TCPServer):
             rd["error"] = "Server: %s does not exist" % d["type"]
             return rd
 
-        if self.nysa is None:
+        if self.n is None:
             rd["response"] = "error"
             rd["error"] = "Nysa is None!"
             return rd
@@ -40,13 +40,15 @@ class ControlServer(SocketServer.TCPServer):
             port = d["port"]
 
         server_type = self.server_types[d["type"]]
-        s = server_type(host = "localhost", port = port, nysa = self.n)
-        ip, port = server.server_address
+        host = "localhost"
+        s = server_type((host, port), server_type.get_request_handler())
+        s.setup(self.n)
+        ip, port = s.server_address
 
         #Put the server in the background
-        server_thread = threading.Thread(target = server.serve_forever)
-        server_thread.setDeamon()
-        rd["%s:%s"] % (str(ip), str(port))
+        server_thread = threading.Thread(target = s.serve_forever)
+        server_thread.setDaemon(True)
+        rd["uri"] = "%s:%s" % (str(ip), str(port))
         rd["ip"] = ip
         rd["port"] = port
         return rd
@@ -67,7 +69,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
     def setup(self):
         self.commands = {
-            "shutdown":self.shutdown_servers,
+            "shutdown":self.server.shutdown_servers,
             "ping":self.ping,
             "start-server":self.server.start_sub_server,
             "list-servers":self.server.list_servers
@@ -104,11 +106,6 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         rd = self.commands[request_dict["command"]](request_dict)
         #rd["port"] = request_dict["port"]
         self.request.sendall(json.dumps(rd))
-
-    def shutdown(self, d):
-        rd = {}
-        rd["response"] = "ok"
-        return "ok"
 
     def ping(self, d):
         rd = {}

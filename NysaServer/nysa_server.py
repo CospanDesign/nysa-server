@@ -68,5 +68,6 @@ def main(port, debug = False):
     s.Info("Find Nysa Device")
 
     nysa = platform_scanner.get_platforms(s)[0]
+    nysa.read_sdb()
     control_server.start_control_server_sync(host = "localhost", port = port, nysa = nysa)
 

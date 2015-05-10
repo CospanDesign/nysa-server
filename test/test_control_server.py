@@ -14,6 +14,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 from NysaServer.server import control_server
 
+from nysa.common import status
+from nysa.host import platform_scanner
+
+
+
 def command_client(ip, port, command, args = {}):
     request = {}
     request["command"] = command
@@ -46,12 +51,18 @@ class Test (unittest.TestCase):
     '''
 
     def test_start_sub_server(self):
-        server = control_server.start_control_server_async()
+        s = status.Status()
+        s.set_level("verbose")
+    
+        s.Info("Find Nysa Device")
+        nysa = platform_scanner.get_platforms(s)[0]
+
+        server = control_server.start_control_server_async(nysa = nysa)
         ip, port = server.server_address
         command_client(ip, port, "ping")
 
+
         server_command = {}
-        server_command["port"] = 1234
         server_command["type"] = "video"
         server_command["args"] = {}
         server_command["args"]["height"] = 272
@@ -60,6 +71,12 @@ class Test (unittest.TestCase):
         response = command_client(ip, port, "start-server", server_command)
         print "Response: %s" % str(response)
         response = command_client(ip, port, "list-servers")
+        print "Response: %s" % str(response)
+
+        server_command = {}
+        server_command["type"] = "gpio"
+
+        response = command_client(ip, port, "start-server", server_command)
         print "Response: %s" % str(response)
 
         control_server.shutdown_control_server(server)
